@@ -1,5 +1,8 @@
 function! s:new(...) abort
-  return extend(deepcopy(s:prompt), get(a:000, 0, {}))
+  let prompt = extend(deepcopy(s:prompt), get(a:000, 0, {}))
+  let prompt.cursor = s:_bind(s:cursor, prompt)
+  let prompt.history = s:_bind(s:history, prompt)
+  return prompt
 endfunction
 
 function! s:_bind(prototype, prompt) abort
@@ -80,8 +83,6 @@ let s:prompt = {
 function! s:prompt.start(...) abort
   call inputsave()
   let self.input = get(a:000, 0, '')
-  let self.cursor = s:_bind(s:cursor, self)
-  let self.history = s:_bind(s:history, self)
   while !self.callback()
     redraw
     echohl Question | echon self.prefix
@@ -126,7 +127,7 @@ endfunction
 
 function! s:prompt.replace(text) abort
   let self.input = a:text
-  call self.cursor.index = strlen(a:text)
+  let self.cursor.index = strlen(a:text)
 endfunction
 
 function! s:prompt.insert(text) abort
@@ -157,6 +158,6 @@ function! s:prompt.keydown(key, char) abort
   return 0
 endfunction
 
-function! s:prompt.callback(prompt) abort
+function! s:prompt.callback() abort
   return 0
 endfunction

@@ -1,144 +1,267 @@
 Describe Vim.Prompt
-  Before all
-    let Path = vital#vital#import('System.Filepath')
-    let scope = themis#helper('scope')
-    let sfile = Path.realpath('autoload/vital/__vital__/Vim/Prompt.vim')
-  End
-
   Before
     let Prompt = vital#vital#import('Vim.Prompt')
-    let sf = scope.funcs(sfile)
-    let sv = scope.vars(sfile)
-  End
-
-  Describe cursor
-    Before
-      let cursor = deepcopy(sv.cursor)
-      let cursor.prompt = deepcopy(sv.prompt)
-    End
-
-    Describe lshift()
-      It decreases {index} by {amount}
-        let cursor.index = 10
-        call cursor.lshift()
-        Assert Equals(cursor.index, 9)
-        call cursor.lshift(9)
-        Assert Equals(cursor.index, 0)
-      End
-
-      It force {index} to be 0 when {index} is less than or equal to 0
-        let cursor.index = 0
-        call cursor.lshift()
-        Assert Equals(cursor.index, 0)
-        let cursor.index = -1
-        call cursor.lshift()
-        Assert Equals(cursor.index, 0)
-      End
-    End
-
-    Describe rshift()
-      It increase {index} by {amount}
-        let cursor.prompt.input = repeat(' ', 10)
-        let cursor.index = 0
-        call cursor.rshift()
-        Assert Equals(cursor.index, 1)
-        call cursor.rshift(9)
-        Assert Equals(cursor.index, 10)
-      End
-
-      It force {index} to be {threshold} when {index} is greather than or equal to {threshold}
-        let cursor.prompt.input = repeat(' ', 10)
-        let cursor.index = 10
-        call cursor.rshift()
-        Assert Equals(cursor.index, 10)
-        let cursor.index = 11
-        call cursor.rshift()
-        Assert Equals(cursor.index, 10)
-      End
-    End
-
-    Describe home()
-      It sets {index} to 0
-        let cursor.index = 10
-        call cursor.home()
-        Assert Equals(cursor.index, 0)
-      End
-    End
-
-    Describe end()
-      It sets {index} to {threshold}
-        let cursor.prompt.input = repeat(' ', 10)
-        let cursor.index = 0
-        call cursor.end()
-        Assert Equals(cursor.index, 10)
-      End
-    End
-
-    Describe ltext()
-      It returns an empty string when {curosr.index} is 0
-        let cursor.prompt.input = '012345'
-        let cursor.index = 0
-        Assert Equals(cursor.ltext(), '')
-      End
-
-      It returns a lhs text from the {cursor.index}
-        let cursor.prompt.input = '012345'
-        let cursor.index = 3
-        Assert Equals(cursor.ltext(), '012')
-      End
-
-      It returns an entire text when {cursor.index} is {threshold}
-        let cursor.prompt.input = '012345'
-        let cursor.index = 6
-        Assert Equals(cursor.ltext(), '012345')
-      End
-    End
-
-    Describe ctext()
-      It return a first char when {curosr.index} is 0
-        let cursor.prompt.input = '012345'
-        let cursor.index = 0
-        Assert Equals(cursor.ctext(), '0')
-      End
-
-      It return a char on the {curosr.index}
-        let cursor.prompt.input = '012345'
-        let cursor.index = 3
-        Assert Equals(cursor.ctext(), '3')
-      End
-
-      It return an empty char when {cursor.index} is {threshold}
-        let cursor.prompt.input = '012345'
-        let cursor.index = 6
-        Assert Equals(cursor.ctext(), '')
-      End
-    End
-
-    Describe rtext()
-      It return an almost entire text when {curosr.index} is 0
-        let cursor.prompt.input = '012345'
-        let cursor.index = 0
-        " NOTE: '0' should be missing while 'ctext()' returns '0'
-        Assert Equals(cursor.rtext(), '12345')
-      End
-
-      It return a rhs text from the {cursor.index}
-        let cursor.prompt.input = '012345'
-        let cursor.index = 3
-        Assert Equals(cursor.rtext(), '45')
-      End
-
-      It return an empty char when {cursor.index} is {threshold}
-        let cursor.prompt.input = '012345'
-        let cursor.index = 6
-        Assert Equals(cursor.rtext(), '')
-      End
-    End
-  End
-
-  Describe history
   End
 
   Describe prompt
+    Before
+      let prompt = Prompt.new()
+    End
+
+    Describe .start({default})
+      " Difficult to test
+    End
+
+    Describe .replace({text})
+      It assings {text} to {prompt.input} and shift a cursor index
+        call prompt.replace('foobar')
+        Assert Equals(prompt.input, 'foobar')
+        Assert Equals(prompt.cursor.index, 6)
+      End
+
+      It replaces {prompt.input} to {text} and shift a cursor index
+        call prompt.replace('foobar')
+        call prompt.replace('hogehoge')
+        Assert Equals(prompt.input, 'hogehoge')
+        Assert Equals(prompt.cursor.index, 8)
+      End
+    End
+
+    Describe .insert({text})
+      It inserts a {text} after the cursor index
+        call prompt.insert('foo')
+        Assert Equals(prompt.input, 'foo')
+        Assert Equals(prompt.cursor.index, 3)
+        call prompt.insert('foo')
+        Assert Equals(prompt.input, 'foofoo')
+        Assert Equals(prompt.cursor.index, 6)
+        call prompt.cursor.lshift(3)
+        call prompt.insert('bar')
+        Assert Equals(prompt.input, 'foobarfoo')
+        Assert Equals(prompt.cursor.index, 6)
+      End
+    End
+
+    Describe .remove() abort
+      It removes a char before the cursor
+        call prompt.replace('012345')
+        call prompt.remove()
+        Assert Equals(prompt.input, '01234')
+        Assert Equals(prompt.cursor.index, 5)
+        call prompt.cursor.lshift(3)
+        call prompt.remove()
+        Assert Equals(prompt.input, '0234')
+        Assert Equals(prompt.cursor.index, 1)
+      End
+    End
+
+    Describe .delete() abort
+      It deletes a char on the cursor
+        call prompt.replace('012345')
+        call prompt.delete()
+        Assert Equals(prompt.input, '012345')
+        Assert Equals(prompt.cursor.index, 6)
+        call prompt.cursor.lshift(3)
+        call prompt.delete()
+        Assert Equals(prompt.input, '01245')
+        Assert Equals(prompt.cursor.index, 3)
+      End
+    End
+
+    Describe .cursor
+      Before
+        let cursor = prompt.cursor
+      End
+
+      Describe .lshift()
+        It decreases {index} by {amount}
+          let cursor.index = 10
+          call cursor.lshift()
+          Assert Equals(cursor.index, 9)
+          call cursor.lshift(9)
+          Assert Equals(cursor.index, 0)
+        End
+
+        It force {index} to be 0 when {index} is less than or equal to 0
+          let cursor.index = 0
+          call cursor.lshift()
+          Assert Equals(cursor.index, 0)
+          let cursor.index = -1
+          call cursor.lshift()
+          Assert Equals(cursor.index, 0)
+        End
+      End
+
+      Describe .rshift()
+        It increase {index} by {amount}
+          let cursor.prompt.input = repeat(' ', 10)
+          let cursor.index = 0
+          call cursor.rshift()
+          Assert Equals(cursor.index, 1)
+          call cursor.rshift(9)
+          Assert Equals(cursor.index, 10)
+        End
+
+        It force {index} to be {threshold} when {index} is greather than or equal to {threshold}
+          let cursor.prompt.input = repeat(' ', 10)
+          let cursor.index = 10
+          call cursor.rshift()
+          Assert Equals(cursor.index, 10)
+          let cursor.index = 11
+          call cursor.rshift()
+          Assert Equals(cursor.index, 10)
+        End
+      End
+
+      Describe .home()
+        It sets {index} to 0
+          let cursor.index = 10
+          call cursor.home()
+          Assert Equals(cursor.index, 0)
+        End
+      End
+
+      Describe .end()
+        It sets {index} to {threshold}
+          let cursor.prompt.input = repeat(' ', 10)
+          let cursor.index = 0
+          call cursor.end()
+          Assert Equals(cursor.index, 10)
+        End
+      End
+
+      Describe .ltext()
+        It returns an empty string when {curosr.index} is 0
+          let cursor.prompt.input = '012345'
+          let cursor.index = 0
+          Assert Equals(cursor.ltext(), '')
+        End
+
+        It returns a lhs text from the {cursor.index}
+          let cursor.prompt.input = '012345'
+          let cursor.index = 3
+          Assert Equals(cursor.ltext(), '012')
+        End
+
+        It returns an entire text when {cursor.index} is {threshold}
+          let cursor.prompt.input = '012345'
+          let cursor.index = 6
+          Assert Equals(cursor.ltext(), '012345')
+        End
+      End
+
+      Describe .ctext()
+        It return a first char when {curosr.index} is 0
+          let cursor.prompt.input = '012345'
+          let cursor.index = 0
+          Assert Equals(cursor.ctext(), '0')
+        End
+
+        It return a char on the {curosr.index}
+          let cursor.prompt.input = '012345'
+          let cursor.index = 3
+          Assert Equals(cursor.ctext(), '3')
+        End
+
+        It return an empty char when {cursor.index} is {threshold}
+          let cursor.prompt.input = '012345'
+          let cursor.index = 6
+          Assert Equals(cursor.ctext(), '')
+        End
+      End
+
+      Describe .rtext()
+        It return an almost entire text when {curosr.index} is 0
+          let cursor.prompt.input = '012345'
+          let cursor.index = 0
+          " NOTE: '0' should be missing while 'ctext()' returns '0'
+          Assert Equals(cursor.rtext(), '12345')
+        End
+
+        It return a rhs text from the {cursor.index}
+          let cursor.prompt.input = '012345'
+          let cursor.index = 3
+          Assert Equals(cursor.rtext(), '45')
+        End
+
+        It return an empty char when {cursor.index} is {threshold}
+          let cursor.prompt.input = '012345'
+          let cursor.index = 6
+          Assert Equals(cursor.rtext(), '')
+        End
+      End
+    End
+
+    Describe .history
+      Before all
+        call histadd('input', 'foo')
+        call histadd('input', 'bar')
+        call histadd('input', 'hoge')
+        call histadd('input', 'piyo')
+      End
+
+      Before
+        let history = prompt.history
+      End
+
+      Describe .previous()
+        It returns previous history of input
+          call history.previous()
+          Assert Equals(prompt.input, histget('input', -1))
+          call history.previous()
+          Assert Equals(prompt.input, histget('input', -2))
+          call history.previous()
+          Assert Equals(prompt.input, histget('input', -3))
+          call history.previous()
+          Assert Equals(prompt.input, histget('input', -4))
+          " End of the history
+          call history.previous()
+          Assert Equals(prompt.input, histget('input', -4))
+        End
+
+        It stores a non empty {input} for the first time
+          let prompt.input = 'foobar'
+          call history.previous()
+          Assert Equals(prompt.input, histget('input', -1))
+          Assert Equals(history.cached, 'foobar')
+        End
+      End
+
+      Describe .next()
+        It returns next history of input
+          call history.previous()
+          call history.previous()
+          call history.previous()
+          call history.previous()
+
+          call history.next()
+          Assert Equals(prompt.input, histget('input', -3))
+          call history.next()
+          Assert Equals(prompt.input, histget('input', -2))
+          call history.next()
+          Assert Equals(prompt.input, histget('input', -1))
+          call history.next()
+          Assert Equals(prompt.input, '')
+
+          " End of the history
+          call history.next()
+          Assert Equals(prompt.input, '')
+        End
+
+        It uses a stored {input} for the index 0
+          let prompt.input = 'foobar'
+          call history.previous()
+          call history.previous()
+          call history.previous()
+          call history.previous()
+
+          call history.next()
+          call history.next()
+          call history.next()
+          call history.next()
+          Assert Equals(prompt.input, 'foobar')
+        End
+      End
+    End
   End
 End
