@@ -1,0 +1,166 @@
+*vital-vim-prompt.txt*		Customizable command input library
+
+Version: 1.0.0
+Author : Alisue <lambdalisue@hashnote.net>
+License: MIT license
+Support: Vim 7.4 and above
+
+
+==============================================================================
+CONTENTS				*Vital.Vim.Prompt-contents*
+
+INTRODUCTION			|Vital.Vim.Prompt-introduction|
+FUNCTION			|Vital.Vim.Prompt-function|
+METHOD  			|Vital.Vim.Prompt-method|
+
+==============================================================================
+INTRODUCTION				*Vital.Vim.Prompt-introduction*
+
+This module provides a customizable commandline interface.
+This implementation focused to provide a simple code. See osyo-manga/vital-over
+if you want a future rich commandline interface.
+>
+	let s:Prompt = vital#vital#import('Vim.Prompt')
+
+	let s:prompt = s:Prompt.new({
+	      \ 'prefix': '# ',
+	      \})
+	
+	function! s:prompt.keydown(key, char) abort
+	  if a:key ==# "\<F1>"
+	    let self.replace('F1 has pressed')
+	    let self._exit = 1
+	    return 1
+	  endif
+	  return 0
+	endfunction
+
+	function! s:prompt.callback() abort
+	  if get(self, '_exit')
+	    return 1
+	  endif
+	  return 0
+	endfunction
+
+	call s:prompt.start()
+<
+
+Latest version:
+https://github.com/lambdalisue/vital-Prompt
+
+See also:
+https://github.com/osyo-manga/vital-over
+
+
+==============================================================================
+FUNCTIONS				*Vital.Vim.Prompt-function*
+
+					*Vital.Vim.Prompt.new()*
+new([{options}])
+	Returns a new prompt instance.
+	The following attributes are allowed for an {options} dictionary.
+
+	"prefix"
+	A prefix string.
+
+==============================================================================
+METHOD					*Vital.Vim.Prompt-method*
+
+					*Vital.Vim.Prompt-prompt.start()*
+prompt.start({default})
+	Run a pseudo commandline interface with a {default} input.
+	The following keymaps are defined:
+
+					*Vital.Vim.Prompt-mapping*
+	Key	Description~
+	<CR>	Accept the input and return the value
+	<C-M>	Accept the input and return the value
+	<Esc>	Cancel the input and return 0
+	<C-[>	Cancel the input and return 0
+	<BS>	Remove a character before the cursor
+	<C-H>	Remove a character before the cursor
+	<Del>	Delete a character on the cursor
+	<C-D>	Delete a character on the cursor
+	<Left>	Shift a cursor left
+	<C-F>	Shift a cursor left
+	<Right>	Shift a cursor right
+	<C-B>	Shift a cursor right
+	<Home>	Shift a cursor to the beginning
+	<C-A>	Shift a cursor to the beginning
+	<End>	Shift a cursor to the end
+	<C-E>	Shift a cursor to the end
+	<Up>	Use previous input history
+	<Down>	Use next input history
+	<C-R>	Start a paste mode as like |i_CTRL-R|
+
+	Note that developers can extend mappings by overriding
+	|Vital.Vim.Prompt-prompt.keydown()| method.
+
+					*Vital.Vim.Prompt-prompt.replace()*
+prompt.replace({text})
+	Replace a current input to a {text}.
+
+					*Vital.Vim.Prompt-prompt.insert()*
+prompt.insert({text})
+	Insert a {text} after the cursor.
+
+					*Vital.Vim.Prompt-prompt.remove()*
+prompt.remove({text})
+	Remove a character before the cursor.
+	 
+					*Vital.Vim.Prompt-prompt.delete()*
+prompt.delete({text})
+	Delete a character on the cursor.
+	 
+					*Vital.Vim.Prompt-prompt.keydown()*
+prompt.keydown({key}, {char})
+	Developers can override this method to regulate the behaviour.
+	A {key} is a original value of |getchar()| and a {char} is |nr2char()|
+	value of {key}.
+	When the method returns 1, appending {char} to prompt.input will be
+	ignored.
+
+					*Vital.Vim.Prompt-prompt.callback()*
+prompt.callback()
+	Developers can override this method to regulate the behaviour.
+	This method is called every before the loop and returning truth value
+	will terminate the main loop.
+
+					*Vital.Vim.Prompt-cursor.lshift()*
+prompt.cursor.lshift([{amount}])
+	Shift cursor left by {amount}.
+
+					*Vital.Vim.Prompt-cursor.rshift()*
+prompt.cursor.rshift([{amount}])
+	Shift cursor right by {amount}.
+
+					*Vital.Vim.Prompt-cursor.home()*
+prompt.cursor.home()
+	Shift cursor at the beginning.
+
+					*Vital.Vim.Prompt-cursor.end()*
+prompt.cursor.end()
+	Shift cursor at the end.
+
+					*Vital.Vim.Prompt-cursor.ltext()*
+prompt.cursor.ltext()
+	Return a partial input which exists at the left from the cursor.
+
+					*Vital.Vim.Prompt-cursor.ctext()*
+prompt.cursor.ctext()
+	Return a partial input which exists on the cursor.
+
+					*Vital.Vim.Prompt-cursor.rtext()*
+prompt.cursor.rtext()
+	Return a partial input which exists at the right from the cursor.
+
+					*Vital.Vim.Prompt-history.previous()*
+prompt.history.previous()
+	Assign a previous input history to the current input.
+
+					*Vital.Vim.Prompt-history.next()*
+prompt.history.next()
+	Assign a next input history to the current input.
+
+==============================================================================
+vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl
