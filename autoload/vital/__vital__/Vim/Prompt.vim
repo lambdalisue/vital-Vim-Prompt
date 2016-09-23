@@ -22,7 +22,7 @@ endfunction
 
 function! s:cursor.rshift(...) abort
   let amount = get(a:000, 0, 1)
-  let threshold = len(self.prompt.input)
+  let threshold = strchars(self.prompt.input, 1)
   let self.index += amount
   let self.index = self.index >= threshold ? threshold : self.index
 endfunction
@@ -32,21 +32,21 @@ function! s:cursor.home() abort
 endfunction
 
 function! s:cursor.end() abort
-  let self.index = len(self.prompt.input)
+  let self.index = strchars(self.prompt.input, 1)
 endfunction
 
 function! s:cursor.ltext() abort
   return self.index == 0
         \ ? ''
-        \ : self.prompt.input[:self.index-1]
+        \ : s:substr(self.prompt.input, 0, self.index-1)
 endfunction
 
 function! s:cursor.ctext() abort
-  return self.prompt.input[self.index]
+  return s:substr(self.prompt.input, self.index, self.index)
 endfunction
 
 function! s:cursor.rtext() abort
-  return self.prompt.input[self.index+1:]
+  return s:substr(self.prompt.input, self.index+1, -1)
 endfunction
 
 
@@ -60,7 +60,7 @@ function! s:history.previous() abort
   let threshold = histnr('input') * -1
   let self.index = self.index <= threshold ? threshold : self.index - 1
   let self.prompt.input = histget('input', self.index)
-  let self.prompt.cursor.index = len(self.prompt.input)
+  let self.prompt.cursor.index = strchars(self.prompt.input, 1)
 endfunction
 
 function! s:history.next() abort
@@ -70,7 +70,7 @@ function! s:history.next() abort
   else
     let self.prompt.input = histget('input', self.index)
   endif
-  let self.prompt.cursor.index = len(self.prompt.input)
+  let self.prompt.cursor.index = strchars(self.prompt.input, 1)
 endfunction
 
 
@@ -127,14 +127,14 @@ endfunction
 
 function! s:prompt.replace(text) abort
   let self.input = a:text
-  let self.cursor.index = strlen(a:text)
+  let self.cursor.index = strchars(a:text, 1)
 endfunction
 
 function! s:prompt.insert(text) abort
   let lhs = self.cursor.ltext()
   let rhs = self.cursor.ctext() . self.cursor.rtext()
   let self.input = lhs . a:text . rhs
-  call self.cursor.rshift(len(a:text))
+  call self.cursor.rshift(strchars(a:text, 1))
 endfunction
 
 function! s:prompt.remove() abort
@@ -142,7 +142,7 @@ function! s:prompt.remove() abort
   if empty(lhs)
     return
   endif
-  let lhs = lhs[:-2]
+  let lhs = s:substr(lhs, 0, -2)
   let rhs = self.cursor.ctext() . self.cursor.rtext()
   let self.input = lhs . rhs
   call self.cursor.lshift()
@@ -160,4 +160,10 @@ endfunction
 
 function! s:prompt.callback() abort
   return 0
+endfunction
+
+" multi-byte character support substr
+function! s:substr(src, s, e) abort
+  let chars = split(a:src, '\zs')
+  return join(chars[a:s : a:e], '')
 endfunction
