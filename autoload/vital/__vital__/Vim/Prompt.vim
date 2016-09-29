@@ -22,7 +22,7 @@ endfunction
 
 function! s:cursor.rshift(...) abort
   let amount = get(a:000, 0, 1)
-  let threshold = strchars(self.prompt.input, 1)
+  let threshold = strchars(self.prompt.input)
   let self.index += amount
   let self.index = self.index >= threshold ? threshold : self.index
 endfunction
@@ -32,7 +32,7 @@ function! s:cursor.home() abort
 endfunction
 
 function! s:cursor.end() abort
-  let self.index = strchars(self.prompt.input, 1)
+  let self.index = strchars(self.prompt.input)
 endfunction
 
 function! s:cursor.ltext() abort
@@ -60,7 +60,7 @@ function! s:history.previous() abort
   let threshold = histnr('input') * -1
   let self.index = self.index <= threshold ? threshold : self.index - 1
   let self.prompt.input = histget('input', self.index)
-  let self.prompt.cursor.index = strchars(self.prompt.input, 1)
+  let self.prompt.cursor.index = strchars(self.prompt.input)
 endfunction
 
 function! s:history.next() abort
@@ -70,7 +70,7 @@ function! s:history.next() abort
   else
     let self.prompt.input = histget('input', self.index)
   endif
-  let self.prompt.cursor.index = strchars(self.prompt.input, 1)
+  let self.prompt.cursor.index = strchars(self.prompt.input)
 endfunction
 
 
@@ -127,14 +127,14 @@ endfunction
 
 function! s:prompt.replace(text) abort
   let self.input = a:text
-  let self.cursor.index = strchars(a:text, 1)
+  let self.cursor.index = strchars(a:text)
 endfunction
 
 function! s:prompt.insert(text) abort
   let lhs = self.cursor.ltext()
   let rhs = self.cursor.ctext() . self.cursor.rtext()
   let self.input = lhs . a:text . rhs
-  call self.cursor.rshift(strchars(a:text, 1))
+  call self.cursor.rshift(strchars(a:text))
 endfunction
 
 function! s:prompt.remove() abort
